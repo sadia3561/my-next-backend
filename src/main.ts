@@ -4,12 +4,16 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Security headers
   app.use(helmet());
+
+  // Enable gzip compression
+app.use(compression()); // ✅ Add this
 
   // Enable CORS for frontend
   app.enableCors({
@@ -31,7 +35,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
-  console.log(`🚀 Backend running at http://localhost:${port}`);
+  console.log(`🚀 Backend running at port ${port}`);
 }
 
 bootstrap();
