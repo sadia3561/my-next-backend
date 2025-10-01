@@ -7,16 +7,113 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Registration {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String
+model User {
+  id          String        @id @default(cuid())
+  email       String        @unique
+  password    String
+  name        String?
+  image       String?
+  orgId       String?
+  org         Org?          @relation(fields: [orgId], references: [id])
+  roles       UserRole[]
+  sessions    Session[]
+  mfaEnabled  Boolean       @default(false)
+  mfaSecret   String?
+  kycDocs     KYC[]       @relation("UserKycDocs")
+  kycDocuments KycDocument[] @relation("UserKycDocuments")
+  auditLogs   AuditLog[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
-model registration {
-  id        Int      @id(map: "PK_cb23dc9d28df8801b15e9e2b8d6") @default(autoincrement())
-  name      String   @db.VarChar
-  email     String   @db.VarChar
-  phone     String?  @db.VarChar
-  createdAt DateTime @default(now()) @db.Timestamp(6)
+model Invite {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  orgId     String?       // optional
+  role      String?       // optional, enum bhi kar sakte ho
+  expiresAt DateTime?     // optional
+  createdAt DateTime @default(now())
+}
+
+model KycDocument {
+  id       String   @id @default(cuid())
+  userId   String
+  type     String
+  url      String
+  status   KycStatus @default(PENDING)
+  
+ user     User     @relation("UserKycDocuments", fields: [userId], references: [id])
+}
+
+model Org {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  gstin     String?  @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Role {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  permissions Permission[]
+  users       UserRole[]
+}
+
+model Permission {
+  id    String   @id @default(cuid())
+  name  String   @unique
+  roles Role[]
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+}
+
+model KYC {
+  id           String   @id @default(cuid())
+  userId       String
+  documentType String
+  documentUrl  String
+  status       KycStatus @default(PENDING)
+  uploadedAt   DateTime  @default(now())
+  reviewedAt   DateTime?
+  reviewerId   String?
+
+
+  user         User     @relation("UserKycDocs", fields: [userId], references: [id])
+}
+
+enum KycStatus {
+  SUBMITTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  metadata  Json?
+  timestamp DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id])
 }

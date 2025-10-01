@@ -2,16 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
-export class RegistrationService {
+export class user {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: { name: string; email: string }) {
-    return this.prisma.registration.create({
+  async create(data: { name: string; email: string; password: string }) {
+    return this.prisma.user.create({
       data,
     });
   }
 
   async findAll() {
-    return this.prisma.registration.findMany();
+    return this.prisma.user.findMany();
   }
 }
