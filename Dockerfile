@@ -19,7 +19,7 @@ RUN npm install --legacy-peer-deps
 COPY . .
 
 # Explicitly generate Prisma client
-RUN npx prisma generate
+
 
 # Build the app (optional if you have build step)
 RUN npm run build
@@ -34,8 +34,14 @@ WORKDIR /app
 # Copy built app + node_modules + prisma client from builder
 COPY --from=builder /app ./
 
+#environment setup
+ENV NODE_ENV=production
+
 # Expose port (adjust to your NestJS port, default 3000)
 EXPOSE 3000
 
+#generate prisma client
+CMD ["sh", "-c", "npx prisma generate && npm run start -- -p $PORT"]
+
 # Start the application
-CMD ["npm", "run", "start:prod"]
+
