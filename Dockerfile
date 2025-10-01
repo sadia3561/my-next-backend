@@ -1,35 +1,41 @@
-# 1. Base image
-FROM node:18-alpine AS builder
+# =========================
+# 1. Builder stage
+# =========================
+FROM node:22-alpine AS builder
 
+# Set working directory
 WORKDIR /app
 
-# Copy package files and install deps
+# Copy package files first
 COPY package.json package-lock.json* ./
+
+# Copy Prisma schema BEFORE installing deps (required for prisma generate)
+COPY prisma ./prisma
+
+# Install dependencies (legacy peer deps just in case)
 RUN npm install --legacy-peer-deps
 
-# Copy source & Prisma schema
+# Copy the rest of the source code
 COPY . .
 
-# Generate Prisma client before build
+# Explicitly generate Prisma client
 RUN npx prisma generate
 
-# Build NestJS app
+# Build the app (optional if you have build step)
 RUN npm run build
 
-# 2. Production image
-FROM node:18-alpine
+# =========================
+# 2. Production stage
+# =========================
+FROM node:22-alpine
 
 WORKDIR /app
 
-# Copy package.json & node_modules
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
+# Copy built app + node_modules + prisma client from builder
+COPY --from=builder /app ./
 
-# Copy dist & Prisma files
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Expose port (adjust to your NestJS port, default 3000)
+EXPOSE 3000
 
-EXPOSE 4000
+# Start the application
 CMD ["npm", "run", "start:prod"]
-
