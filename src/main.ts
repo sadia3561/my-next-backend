@@ -17,7 +17,7 @@ app.use(compression()); // ✅ Add this
 
   // Enable CORS for frontend
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: 'https://my-next-frontend-seven.vercel.app',
     credentials: true,
   });
 
