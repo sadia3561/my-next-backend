@@ -1,27 +1,13 @@
-# 1. Base image
-FROM node:22-alpine AS builder
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies first
 COPY package.json package-lock.json* ./
-
-# Copy Prisma schema early (so postinstall can run)
-COPY prisma ./prisma
-
 RUN npm install --legacy-peer-deps
 
-# Copy the rest of the source code
 COPY . .
 
-RUN npm run build
+RUN npm run build   # NestJS build
 
-# 2. Production image
-FROM node:22-alpine
-
-
-WORKDIR /app
-
-COPY --from=builder /app ./
-
+EXPOSE 3000
 CMD ["node", "dist/src/main.js"]
