@@ -9,8 +9,8 @@ export class RabbitService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     try {
       // CloudAMQP URL from env
-      const amqpUrl = process.env.AMQP_URL;
-      if (!amqpUrl) throw new Error('AMQP_URL not set in environment');
+      const amqpUrl = process.env.RABBITMQ_URL;
+      if (!amqpUrl) throw new Error('RABBITMQ_URL not set in environment');
 
       // Connect to RabbitMQ
       this.connection = await amqplib.connect(amqpUrl);
