@@ -11,13 +11,13 @@ export class AuthService {
   ) {}
 
   // 🟢 Register user
-  async register(dto: { email: string; password: string }) {
+  async register(dto: { email: string; password: string; role: string }) {
     const existingUser = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existingUser) throw new BadRequestException('User already exists');
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const user = await this.prisma.user.create({
-      data: { email: dto.email, password: hashedPassword },
+      data: { email: dto.email, password: hashedPassword, role: dto.role as any, },
     });
 
     return { message: 'User registered successfully', user };
@@ -34,14 +34,16 @@ export class AuthService {
     const payload = { id: user.id, email: user.email };
     const token = this.jwtService.sign(payload);
 
-    return { token };
+    return { token,
+      role: user.role,
+     };
   }
 
   // 🟢 Profile
   async getProfile(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true },
+      select: { id: true, email: true, role: true },
     });
   }
 }
