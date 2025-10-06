@@ -8,44 +8,46 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  password     String
-  role         String?
-  name         String?
-  image        String?
-  orgId        String?
-  org          Org?          @relation(fields: [orgId], references: [id])
-  roles        String?
-  sessions     Session[]
-  mfaEnabled   Boolean       @default(false)
-  mfaSecret    String?
-  kycDocs      KYC[]         @relation("UserKycDocs")
+  id          String        @id @default(cuid())
+  email       String        @unique
+  password    String
+  role        String?
+  name        String?
+  image       String?
+  orgId       String?
+  org         Org?          @relation(fields: [orgId], references: [id])
+  roles       String?
+  sessions    Session[]
+  mfaEnabled  Boolean       @default(false)
+  mfaSecret   String?
+  kycDocs     KYC[]         @relation("UserKycDocs")
   kycDocuments KycDocument[] @relation("UserKycDocuments")
-  auditLogs    AuditLog[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  UserRole     UserRole[]
+  auditLogs   AuditLog[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  userRoles   UserRole[]    // 👈 added this line
 }
 
+
 model Invite {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   email     String
-  token     String    @unique
-  orgId     String? // optional
-  role      String? // optional, enum bhi kar sakte ho
-  expiresAt DateTime? // optional
-  createdAt DateTime  @default(now())
+  token     String   @unique
+  orgId     String?       // optional
+  role      String?       // optional, enum bhi kar sakte ho
+  expiresAt DateTime?     // optional
+  createdAt DateTime @default(now())
 }
 
 model KycDocument {
-  id     String    @id @default(cuid())
-  userId String
-  type   String
-  url    String
-  status KycStatus @default(PENDING)
-
-  user User @relation("UserKycDocuments", fields: [userId], references: [id])
+  id       String   @id @default(cuid())
+  userId   String
+  type     String
+  url      String
+  status   KycStatus @default(PENDING)
+  
+ user     User     @relation("UserKycDocuments", fields: [userId], references: [id])
 }
 
 model Org {
@@ -59,15 +61,15 @@ model Org {
 }
 
 model Role {
-  id          String       @id @default(cuid())
-  name        String       @unique
+  id          String        @id @default(cuid())
+  name        String        @unique
   permissions Permission[]
   users       UserRole[]
 }
 
 model Permission {
-  id    String @id @default(cuid())
-  name  String @unique
+  id    String   @id @default(cuid())
+  name  String   @unique
   roles Role[]
 }
 
@@ -81,7 +83,7 @@ model UserRole {
 }
 
 model KYC {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   userId       String
   documentType String
   documentUrl  String
@@ -90,7 +92,8 @@ model KYC {
   reviewedAt   DateTime?
   reviewerId   String?
 
-  user User @relation("UserKycDocs", fields: [userId], references: [id])
+
+  user         User     @relation("UserKycDocs", fields: [userId], references: [id])
 }
 
 enum KycStatus {
