@@ -1,15 +1,5 @@
-import { IsNotEmpty, IsString } from 'class-validator';
-
-export class KycUploadDto {
-  @IsNotEmpty()
-  @IsString()
-  userId: string;
-
-  @IsNotEmpty()
-  @IsString()
-  documentType: string; // e.g. "GSTIN", "PAN", "License"
-
-  @IsNotEmpty()
-  @IsString()
-  fileUrl: string; // presigned S3 URL
+// src/kyc/dto/kyc-upload.dto.ts
+export class UploadKycDto {
+  userId: string;         // userId as string (Prisma User.id is string)
+  documentType: string;   // e.g., 'PAN', 'LICENSE', etc.
 }
