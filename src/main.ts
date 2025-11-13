@@ -1,4 +1,3 @@
-// backend/src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
@@ -10,14 +9,21 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Security headers
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: false,
+      crossOriginOpenerPolicy: false,
+    }),
+  );
 
   // Enable gzip compression
-app.use(compression()); // ✅ Add this
+  app.use(compression());
 
   // Enable CORS for frontend
   app.enableCors({
-    origin: 'https://my-next-frontend-seven.vercel.app',
+    origin: ['https://my-next-frontend-seven.vercel.app'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
@@ -27,15 +33,15 @@ app.use(compression()); // ✅ Add this
   // Global input validation
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // strip unknown properties
-      forbidNonWhitelisted: true, // throw error if unknown properties
-      transform: true, // auto transform DTOs
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
   const port = process.env.PORT || 4000;
-  await app.listen(port);
-  console.log(`🚀 Backend running at port ${port}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀 Backend running on port ${port}`);
 }
 
 bootstrap();
