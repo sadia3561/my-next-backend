@@ -1,4 +1,5 @@
-//src/auth/dto/register-Org.dto
+// src/auth/dto/register-org.dto.ts
+
 import {
   IsNotEmpty,
   IsOptional,
@@ -23,8 +24,9 @@ export class RegisterOrgDto {
   @IsString()
   address: string;
 
+  // Single file upload (multer handles File type)
   @IsOptional()
-  kycDoc?: any; // handled by multer or file upload middleware
+  kycDoc?: Express.Multer.File;
 
   // -------- Step 2: Contact Details --------
   @IsNotEmpty()
@@ -40,7 +42,9 @@ export class RegisterOrgDto {
   email: string;
 
   @IsNotEmpty()
-  @Matches(/^[6-9]\d{9}$/, { message: 'Phone number must be a valid 10-digit Indian mobile number' })
+  @Matches(/^[6-9]\d{9}$/, {
+    message: 'Phone number must be a valid 10-digit Indian mobile number',
+  })
   phone: string;
 
   @ValidateIf((o) => o.otp !== undefined)
@@ -61,7 +65,7 @@ export class RegisterOrgDto {
   experience: string;
 
   @IsOptional()
-  licenseDoc?: any; // handled by multer
+  licenseDoc?: Express.Multer.File;
 
   @IsOptional()
   @IsString()
@@ -73,7 +77,9 @@ export class RegisterOrgDto {
   username: string;
 
   @IsNotEmpty()
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @MinLength(8, {
+    message: 'Password must be at least 8 characters long',
+  })
   password: string;
 
   @IsNotEmpty()

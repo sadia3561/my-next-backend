@@ -1,28 +1,38 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-type KycStatus = 'SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED';
-import { PrismaService } from '../prisma/prisma.service'; 
-
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { UploadKycDto } from './dto/kyc-upload.dto';
-
-const prisma = new PrismaClient();
+import { KycDocument } from '@prisma/client';
+import { Express } from 'express';
 
 @Injectable()
 export class KycService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  // =========================
+  // Validate file type
+  // =========================
+  private validateFile(file: Express.Multer.File) {
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new BadRequestException(`Invalid file type: ${file.originalname}`);
+    }
+  }
+
   // =========================
   // Single KYC Upload
   // =========================
-  constructor(private prisma: PrismaService) {}
-  async uploadKyc(file: Express.Multer.File, body: UploadKycDto) {
+  async uploadKyc(file: Express.Multer.File, body: UploadKycDto): Promise<KycDocument> {
     if (!body.userId || !body.documentType) {
-      throw new Error('Missing required fields for KYC upload');
+      throw new BadRequestException('Missing required fields for KYC upload');
     }
 
-    const kycDoc = await prisma.kycDocument.create({
+    this.validateFile(file);
+
+    const kycDoc = await this.prisma.kycDocument.create({
       data: {
         userId: body.userId,
         documentType: body.documentType,
-        url: file.path || file.filename, // use path if stored on disk, filename if in memory
+        url: file.path || file.filename, // file storage path
         status: 'PENDING',
       },
     });
@@ -33,31 +43,36 @@ export class KycService {
   // =========================
   // Multiple KYC Upload
   // =========================
-  async uploadMultipleKyc(files: Express.Multer.File[], body: UploadKycDto) {
-    const uploadedDocs: any[] = []; // ✅ makes it type-safe
+  async uploadMultipleKyc(files: Express.Multer.File[], body: UploadKycDto): Promise<KycDocument[]> {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No files provided for KYC upload');
+    }
+
+    const uploadedDocs: KycDocument[] = [];
 
     for (const file of files) {
       const doc = await this.uploadKyc(file, body);
       uploadedDocs.push(doc);
     }
+
     return uploadedDocs;
   }
 
-
-  async kycQueue() {
-  return await this.prisma.kycDocument.findMany({
-    where: { status: 'PENDING' },
-    orderBy: [{ createdAt: 'desc' }],
-
-  });
-}
-
+  // =========================
+  // Get all pending KYC documents
+  // =========================
+  async kycQueue(): Promise<KycDocument[]> {
+    return this.prisma.kycDocument.findMany({
+      where: { status: 'PENDING' },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 
   // =========================
   // Approve a KYC document
   // =========================
-  async approveKyc(id: string) {
-    return prisma.kycDocument.update({
+  async approveKyc(id: string): Promise<KycDocument> {
+    return this.prisma.kycDocument.update({
       where: { id },
       data: { status: 'APPROVED' },
     });
@@ -66,8 +81,8 @@ export class KycService {
   // =========================
   // Reject a KYC document
   // =========================
-  async rejectKyc(id: string, note?: string) {
-    return prisma.kycDocument.update({
+  async rejectKyc(id: string, note?: string): Promise<KycDocument> {
+    return this.prisma.kycDocument.update({
       where: { id },
       data: { status: 'REJECTED', note: note || null },
     });
@@ -76,21 +91,19 @@ export class KycService {
   // =========================
   // Get KYC documents by user ID
   // =========================
-  async getKycByUser(userId: string) {
-    return prisma.kycDocument.findMany({
+  async getKycByUser(userId: string): Promise<KycDocument[]> {
+    return this.prisma.kycDocument.findMany({
       where: { userId },
-      orderBy: [{ createdAt: 'desc' }],
-
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   // =========================
   // Get all KYC documents (admin)
   // =========================
-  async getAllKyc() {
-    return prisma.kycDocument.findMany({
-      orderBy: [{ createdAt: 'desc' }],
-
+  async getAllKyc(): Promise<KycDocument[]> {
+    return this.prisma.kycDocument.findMany({
+      orderBy: { createdAt: 'desc' },
     });
   }
 }

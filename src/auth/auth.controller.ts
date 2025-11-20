@@ -1,3 +1,4 @@
+// src/auth/auth.controller.ts
 import {
   Controller,
   Post,
@@ -5,10 +6,11 @@ import {
   UseInterceptors,
   UploadedFiles,
 } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { AuthService } from './auth.service';
 import { OtpService } from './otp.service';
-import { SendOtpDto, VerifyOtpDto } from './dto/otp.dto';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('auth')
 export class AuthController {
@@ -17,36 +19,40 @@ export class AuthController {
     private readonly otpService: OtpService,
   ) {}
 
-  // 📝 Registration with files (KYC + License)
   @Post('register-org')
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'kycDoc', maxCount: 1 },
-      { name: 'licenseDoc', maxCount: 1 },
-    ]),
+    FileFieldsInterceptor(
+      [
+        { name: 'kycDoc', maxCount: 1 },
+        { name: 'licenseDoc', maxCount: 1 },
+      ],
+      {
+        storage: diskStorage({
+          destination: './uploads/kyc', // ensure this folder exists
+          filename: (req, file, callback) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+            const fileExt = extname(file.originalname);
+            callback(null, `${uniqueSuffix}${fileExt}`);
+          },
+        }),
+      },
+    ),
   )
   async registerOrg(
     @UploadedFiles()
     files: { kycDoc?: Express.Multer.File[]; licenseDoc?: Express.Multer.File[] },
-    @Body() body: any, // FormData comes here
+    @Body() body: any,
   ) {
-    // Attach uploaded files to body
-    body.kycDoc = files.kycDoc?.[0];
-    body.licenseDoc = files.licenseDoc?.[0];
+    // Attach uploaded files (if any) to body as objects with filename/path
+    if (files?.kycDoc?.[0]) {
+      body.kycDoc = files.kycDoc[0]; // contains filename, path, mimetype, etc
+    }
+    if (files?.licenseDoc?.[0]) {
+      body.licenseDoc = files.licenseDoc[0];
+    }
 
-    // Now call your service
     return this.authService.registerOrg(body);
   }
 
-  // 📱 Send OTP
-  @Post('send-otp')
-  async sendOtp(@Body() dto: SendOtpDto) {
-    return this.otpService.sendOtp(dto.phone);
-  }
-
-  // ✅ Verify OTP
-  @Post('verify-otp')
-  async verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.otpService.verifyOtp(dto.phone, dto.otp);
-  }
+  // ... other endpoints
 }

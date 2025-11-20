@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterOrgDto } from './dto/register-org.dto';
 import * as bcrypt from 'bcrypt';
@@ -22,23 +22,26 @@ export class AuthService {
 
   async registerOrg(dto: RegisterOrgDto) {
     try {
-      // ✅ Hash password
+      // 🟦 PASSWORD HASH
       const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-      // ✅ Safely get filenames
-      const kycFileName = dto.kycDoc?.filename || null;
-      const licenseFileName = dto.licenseDoc?.filename || null;
+      // 🟦 FILE NAMES FROM MULTER
+      const kycDoc = dto.kycDoc as Express.Multer.File;
+      const licenseDoc = dto.licenseDoc as Express.Multer.File;
 
-      // ✅ Check if email already exists
+      const kycFileName = kycDoc?.filename || null;
+      const licenseFileName = licenseDoc?.filename || null;
+
+      // 🟦 DUPLICATE EMAIL CHECK
       const existingUser = await this.prisma.user.findUnique({
         where: { email: dto.email },
       });
 
       if (existingUser) {
-        return { success: false, message: 'Email already registered' };
+        throw new BadRequestException('Email already registered');
       }
 
-      // ✅ Create organisation registration
+      // 🟦 CREATE PARTNER REGISTRATION ENTRY
       const registration = await this.prisma.partnerRegistration.create({
         data: {
           orgName: dto.orgName,
@@ -61,7 +64,7 @@ export class AuthService {
         },
       });
 
-      // ✅ Create user record
+      // 🟦 CREATE USER RECORD
       const user = await this.prisma.user.create({
         data: {
           email: dto.email,
@@ -72,37 +75,33 @@ export class AuthService {
         },
       });
 
-      // ✅ Upload KYC & License files (if available)
-      if (dto.kycDoc) {
-        await this.kycService.uploadKyc(dto.kycDoc as Express.Multer.File, {
+      // 🟦 SAVE KYC DOCS IN KycDocument TABLE (only once)
+      if (kycDoc) {
+        await this.kycService.uploadKyc(kycDoc, {
           userId: user.id,
-          documentType: dto.kycDoc.mimetype || 'UNKNOWN',
+          documentType: 'KYC',
         });
       }
 
-      if (dto.licenseDoc) {
-        await this.kycService.uploadKyc(dto.licenseDoc as Express.Multer.File, {
+      if (licenseDoc) {
+        await this.kycService.uploadKyc(licenseDoc, {
           userId: user.id,
           documentType: 'LICENSE',
         });
       }
 
-      // ✅ Send OTP
+      // 🟦 SEND OTP
       await this.otpService.sendOtp(dto.phone);
 
       return {
         success: true,
-        message: 'Registration created. Please verify OTP to proceed.',
+        message: 'Registration successful, verify OTP.',
         registrationId: registration.id,
         phone: dto.phone,
       };
     } catch (error) {
-      console.error('❌ Error in registerOrg:', error);
-      return {
-        success: false,
-        message: 'Internal server error while registering organisation',
-        error: error.message || error,
-      };
+      console.error('❌ Registration Error:', error);
+      throw new BadRequestException(error.message || 'Registration failed');
     }
   }
 
@@ -110,7 +109,7 @@ export class AuthService {
     const result = await this.otpService.verifyOtp(phone, otp);
 
     if (!result.success) {
-      return { success: false, message: 'Invalid or expired OTP' };
+      throw new BadRequestException('Invalid or expired OTP');
     }
 
     await this.prisma.partnerRegistration.updateMany({
