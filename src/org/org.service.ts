@@ -1,22 +1,35 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class OrgService {
-  async getOrgProfile() {
-    // fetch from DB with Prisma
-    return {
-      orgId: 'org_123',
-      name: 'Demo Organization',
-      gstin: '22AAAAA0000A1Z5',
-      verified: false,
-    };
-  }
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) {}
 
-  async updateOrgProfile(body: any) {
-    // update org record in DB
-    return {
-      message: 'Org profile updated',
-      data: body,
-    };
+  async approveOrganization(orgId: string) {
+    const org = await this.prisma.organization.findUnique({ where: { id: orgId } });
+    if (!org) throw new BadRequestException('Organization not found');
+
+    // Update org status
+    const updatedOrg = await this.prisma.organization.update({
+      where: { id: orgId },
+      data: { status: 'APPROVED', pendingApproval: false },
+    });
+
+    // Get first user of org
+    const user = await this.prisma.user.findFirst({ where: { orgId: orgId } });
+    if (!user) throw new BadRequestException('No user found for organization');
+
+    // Send approval email
+    try {
+      await this.mail.sendApprovedEmail(user.email, org.name);
+    } catch (err) {
+      console.error('sendApprovedEmail failed', err);
+    }
+
+    return updatedOrg;
   }
 }

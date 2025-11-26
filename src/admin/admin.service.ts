@@ -1,74 +1,87 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { KycStatus, RegistrationStatus, UserRoleEnum } from '@prisma/client';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private mail: MailService) {}
 
-  // =========================
-  // Partner Registrations
-  // =========================
-
-  async getAllRegistrations() {
-    return this.prisma.partnerRegistration.findMany({
-      orderBy: { submittedAt: 'desc' },
-    });
-  }
-
-  async getRegistrationById(id: string) {
-    return this.prisma.partnerRegistration.findUnique({
-      where: { id },
-    });
-  }
-
-  async updateRegistrationStatus(id: string, status: RegistrationStatus) {
-    return this.prisma.partnerRegistration.update({
-      where: { id },
-      data: {
-        status,
-        reviewedAt: new Date(),
+  async getPendingOrgs() {
+    const orgs = await this.prisma.organization.findMany({
+      where: { pendingApproval: true },
+      include: {
+        users: { select: { id: true, email: true, name: true, status: true } },
       },
-    });
-  }
-
-  // =========================
-  // KYC Documents
-  // =========================
-
-  async getQueueItems() {
-    return this.prisma.kycDocument.findMany({
-      where: { status: KycStatus.PENDING },
-      include: { user: true },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Map for frontend convenience
+    return orgs.map((o) => ({
+      id: o.id,
+      name: o.name,
+      gstin: o.gstin,
+      website: o.website,
+      industry: o.industry,
+      createdAt: o.createdAt,
+      users: o.users,
+    }));
   }
 
-  async updateKycStatus(docId: string, status: KycStatus) {
-    return this.prisma.kycDocument.update({
-      where: { id: docId },
-      data: { status },
+  async approveOrg(orgId: string) {
+    const org = await this.prisma.organization.findUnique({ where: { id: orgId }, include: { users: true } });
+    if (!org) throw new NotFoundException('Organization not found');
+
+    await this.prisma.organization.update({
+      where: { id: orgId },
+      data: { pendingApproval: false, status: 'APPROVED' },
     });
-  }
 
-  // =========================
-  // User Management
-  // =========================
-
-  async getAllUsers() {
-    return this.prisma.user.findMany({
-      include: { org: true },
-    });
-  }
-
-  async updateUserRole(userId: string, role: UserRoleEnum) {
-    if (!Object.values(UserRoleEnum).includes(role)) {
-      throw new Error(`Invalid role: ${role}`);
+    // approve all users under org (typically only one)
+    const users = org.users || [];
+    for (const u of users) {
+      await this.prisma.user.update({
+        where: { id: u.id },
+        data: { status: 'APPROVED' },
+      });
+      // send approved email
+      await this.mail.sendApprovedEmail(u.email, org.name);
     }
 
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { role },
+    // audit
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'ORG_APPROVED',
+        metadata: { orgId },
+      },
     });
+
+    return { message: 'Organization approved' };
+  }
+
+  async rejectOrg(orgId: string) {
+    const org = await this.prisma.organization.findUnique({ where: { id: orgId }, include: { users: true } });
+    if (!org) throw new NotFoundException('Organization not found');
+
+    await this.prisma.organization.update({
+      where: { id: orgId },
+      data: { pendingApproval: false, status: 'REJECTED' },
+    });
+
+    // optionally update users status
+    for (const u of org.users) {
+      await this.prisma.user.update({
+        where: { id: u.id },
+        data: { status: 'REJECTED' },
+      });
+    }
+
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'ORG_REJECTED',
+        metadata: { orgId },
+      },
+    });
+
+    return { message: 'Organization rejected' };
   }
 }

@@ -1,58 +1,35 @@
 // src/auth/auth.controller.ts
-import {
-  Controller,
-  Post,
-  Body,
-  UseInterceptors,
-  UploadedFiles,
-} from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { Controller, Post, Body, UseInterceptors, UploadedFiles } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { OtpService } from './otp.service';
+import { RegisterOrgDto } from './dto/register-org.dto';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly otpService: OtpService,
-  ) {}
+  constructor(private authService: AuthService) {}
 
-  @Post('register-org')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'kycDoc', maxCount: 1 },
-        { name: 'licenseDoc', maxCount: 1 },
-      ],
-      {
-        storage: diskStorage({
-          destination: './uploads/kyc', // ensure this folder exists
-          filename: (req, file, callback) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-            const fileExt = extname(file.originalname);
-            callback(null, `${uniqueSuffix}${fileExt}`);
-          },
-        }),
-      },
-    ),
-  )
-  async registerOrg(
-    @UploadedFiles()
-    files: { kycDoc?: Express.Multer.File[]; licenseDoc?: Express.Multer.File[] },
-    @Body() body: any,
-  ) {
-    // Attach uploaded files (if any) to body as objects with filename/path
-    if (files?.kycDoc?.[0]) {
-      body.kycDoc = files.kycDoc[0]; // contains filename, path, mimetype, etc
-    }
-    if (files?.licenseDoc?.[0]) {
-      body.licenseDoc = files.licenseDoc[0];
-    }
-
-    return this.authService.registerOrg(body);
+  @Post('login')
+  async login(@Body() dto: { username: string; password: string }) {
+    return this.authService.loginWithUsername(dto);
   }
 
-  // ... other endpoints
+  @Post('register')
+  async register(@Body() dto: { username: string; password: string; email: string; name?: string }) {
+    return this.authService.registerUser(dto);
+  }
+
+ @Post("register-org")
+@UseInterceptors(AnyFilesInterceptor())
+async registerOrg(
+  @UploadedFiles() files: Array<Express.Multer.File>,
+  @Body() dto: RegisterOrgDto
+) {
+  console.log("DTO RECEIVED =>", dto);
+  console.log("FILES RECEIVED =>", files);
+
+  return this.authService.registerOrg(dto, files);
+}
+
 }

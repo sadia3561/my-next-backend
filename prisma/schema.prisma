@@ -26,27 +26,30 @@ enum UserRoleEnum {
   USER
 }
 
-
 model User {
-  id            String                @id @default(cuid())
-  email         String                @unique
-  password      String
-  role          UserRoleEnum          @default(USER)
-  name          String?
-  image         String?
-  orgId         String?
-  org           Organization?         @relation(fields: [orgId], references: [id])
-  sessions      Session[]
-  mfaEnabled    Boolean               @default(false)
-  mfaSecret     String?
-  kycDocs       KYC[]                 @relation("UserKycDocs")
-  kycDocuments  KycDocument[]         @relation("UserKycDocuments")
-  auditLogs     AuditLog[]
-  userRoles     UserRole[]
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
-  phone         String?
-  registrations PartnerRegistration[]
+  id       String   @id @default(cuid())
+  email    String   @unique
+  password String
+  role     UserRoleEnum @default(USER)
+  username  String   @unique
+  name     String?
+  image    String?
+  status   RegistrationStatus @default(PENDING)
+  orgId    String?
+  org      Organization? @relation(fields: [orgId], references: [id])
+  sessions Session[]
+  mfaEnabled Boolean @default(false)
+  mfaSecret  String?
+
+  kycDocs      KYC[]           @relation("UserKycDocs")
+  kycDocuments KycDocument[]   @relation("UserKycDocuments")
+  auditLogs    AuditLog[]
+  userRoles    UserRole[]
+  registrations PartnerRegistration[] @relation("UserPartnerRegistrations")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  phone     String?
 }
 
 model Organization {
@@ -57,12 +60,14 @@ model Organization {
   address         String?
   gstin           String?  @unique
   website         String?
-  industry        String
+  industry        String?
   timezone        String?
   pendingApproval Boolean  @default(true)
+
   users           User[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model PartnerRegistration {
@@ -85,11 +90,13 @@ model PartnerRegistration {
   description   String?
   username      String
   passwordHash  String
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   reviewedAt    DateTime?
-  User          User?              @relation(fields: [userId], references: [id])
+
   userId        String?
+  User          User? @relation("UserPartnerRegistrations", fields: [userId], references: [id])
 }
 
 model KycDocument {
@@ -101,6 +108,7 @@ model KycDocument {
   status       KycStatus @default(PENDING)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
   user         User      @relation("UserKycDocuments", fields: [userId], references: [id])
 }
 
@@ -113,6 +121,7 @@ model KYC {
   uploadedAt   DateTime  @default(now())
   reviewedAt   DateTime?
   reviewerId   String?
+
   user         User      @relation("UserKycDocs", fields: [userId], references: [id])
 }
 
@@ -163,5 +172,6 @@ model Session {
   userId    String
   token     String   @unique
   expiresAt DateTime
+
   user      User     @relation(fields: [userId], references: [id])
 }

@@ -1,25 +1,17 @@
 import { Module } from '@nestjs/common';
-import { OtpService } from './otp.service';
-import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { KycModule } from '../kyc/kyc.module';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { MailModule } from 'src/mail/mail.module';
+import { MailService } from 'src/mail/mail.service';
 import { JwtStrategy } from './jwt.strategy';
-import { PrismaModule } from '../prisma/prisma.module';
-
+import { PassportModule } from '@nestjs/passport';
 
 
 @Module({
-  imports: [
-    PrismaModule,
-    KycModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'default_secret', // ✅ add your JWT secret
-      signOptions: { expiresIn: '1d' }, // ✅ optional
-    }),
-  ],
+  imports: [MailModule, PassportModule.register({ defaultStrategy: 'jwt' })],
   controllers: [AuthController],
-  providers: [AuthService,JwtStrategy,OtpService],
-  exports: [JwtModule, AuthService,OtpService],
+  providers: [AuthService, PrismaService, MailService, JwtStrategy],
+  exports: [PassportModule, JwtStrategy],
 })
 export class AuthModule {}

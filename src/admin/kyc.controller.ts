@@ -1,4 +1,3 @@
-// src/admin/kyc.controller.ts
 import { Controller, Get, Param, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
 import { KycService } from '../kyc/kyc.service';
 
@@ -6,17 +5,15 @@ import { KycService } from '../kyc/kyc.service';
 export class AdminKycController {
   constructor(private readonly kycService: KycService) {}
 
-  // GET all pending KYC documents for admin review
   @Get('pending')
   async getPendingKyc() {
     try {
-      return await this.kycService.kycQueue(); // fetch pending KYCs
+      return await this.kycService.kycQueue();
     } catch (error) {
       throw new HttpException('Failed to fetch pending KYC documents', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  // POST approve KYC by id
   @Post('approve/:id')
   async approveKyc(@Param('id') id: string) {
     try {
@@ -26,7 +23,6 @@ export class AdminKycController {
     }
   }
 
-  // POST reject KYC by id
   @Post('reject/:id')
   async rejectKyc(@Param('id') id: string, @Body('note') note?: string) {
     try {

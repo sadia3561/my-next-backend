@@ -28,6 +28,11 @@ export class RegisterOrgDto {
   @IsOptional()
   kycDoc?: Express.Multer.File;
 
+  // ✅ Add this for the saved URL of KYC document
+  @IsOptional()
+  @IsString()
+  kycDocumentUrl?: string;
+
   // -------- Step 2: Contact Details --------
   @IsNotEmpty()
   @IsString()

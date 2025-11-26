@@ -1,53 +1,31 @@
-import { Controller, Get, Patch, Param, Body } from '@nestjs/common';
+//src/admin/admin.controller.ts
+import { Controller, Get, Patch, Param, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { RegistrationStatus, KycStatus, UserRoleEnum } from '@prisma/client';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { UserRoleEnum } from '@prisma/client';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  // ✅ Get all registrations
-  @Get('registrations')
-  getAllRegistrations() {
-    return this.adminService.getAllRegistrations();
+  @Get('approval')
+  @Roles(UserRoleEnum.ADMIN) // only ADMIN can access
+  getPendingOrgs() {
+    return this.adminService.getPendingOrgs();
   }
 
-  // ✅ Get registration by ID
-  @Get('registration/:id')
-  getRegistrationById(@Param('id') id: string) {
-    return this.adminService.getRegistrationById(id);
+  @Patch('approve/:orgId')
+  @Roles(UserRoleEnum.ADMIN)
+  approveOrg(@Param('orgId') orgId: string) {
+    return this.adminService.approveOrg(orgId);
   }
 
-  // ✅ Update registration status
-  @Patch('registration/:id/status')
-  updateRegistrationStatus(@Param('id') id: string, @Body() body: { status: string }) {
-    const status = body.status.toUpperCase() as keyof typeof RegistrationStatus;
-    return this.adminService.updateRegistrationStatus(id, RegistrationStatus[status]);
-  }
-
-  // ✅ Get all KYC queue items
-  @Get('kyc-queue')
-  getKycQueue() {
-    return this.adminService.getQueueItems();
-  }
-
-  // ✅ Update KYC status
-  @Patch('kyc/:id/status')
-  updateKycStatus(@Param('id') id: string, @Body() body: { status: string }) {
-    const status = body.status.toUpperCase() as keyof typeof KycStatus;
-    return this.adminService.updateKycStatus(id, KycStatus[status]);
-  }
-
-  // ✅ Get all users
-  @Get('users')
-  getAllUsers() {
-    return this.adminService.getAllUsers();
-  }
-
-  // ✅ Update user role
-  @Patch('user/:id/role')
-  updateUserRole(@Param('id') id: string, @Body() body: { role: string }) {
-    const role = body.role.toUpperCase() as keyof typeof UserRoleEnum;
-    return this.adminService.updateUserRole(id, UserRoleEnum[role]);
+  @Patch('reject/:orgId')
+  @Roles(UserRoleEnum.ADMIN)
+  rejectOrg(@Param('orgId') orgId: string) {
+    return this.adminService.rejectOrg(orgId);
   }
 }
