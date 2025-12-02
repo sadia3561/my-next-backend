@@ -21,3 +21,18 @@
 
   //return invite;
 //}
+import { Controller, Get, Post } from '@nestjs/common';
+
+@Controller('invite')
+export class InviteController {
+
+  @Get()
+  getAll() {
+    return 'All invites route working';
+  }
+
+  @Post()
+  create() {
+    return 'Create invite route working';
+  }
+}

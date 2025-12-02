@@ -7,19 +7,23 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // CORS properly configure
+  // ⚡ GLOBAL PREFIX: All APIs will start with /api
+  app.setGlobalPrefix('api');
+
+  // ⚡ Proper CORS settings
   app.enableCors({
-    origin: 'https://my-next-frontend-seven.vercel.app', // frontend URL
+    origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true, // cookies/session ke liye
+    credentials: true,
   });
 
+  // ⚡ Increase JSON size limit
   app.use(json({ limit: '5mb' }));
 
   const port = process.env.PORT ? Number(process.env.PORT) : 4000;
   await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 Backend is running on port ${port}`);
+  console.log(`🚀 Backend is running on port ${port} with /api prefix`);
 }
 bootstrap();

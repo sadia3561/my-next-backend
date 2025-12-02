@@ -1,8 +1,10 @@
+// src/auth/auth.service.ts
 import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { RegisterOrgDto } from './dto/register-org.dto';
+import supabase from '../supabase/supabase.client'; // ✅ Added Supabase import
 
 @Injectable()
 export class AuthService {
@@ -63,10 +65,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid username or password');
     }
 
-   // no login without approval)
-  if (user.status !== 'APPROVED') {
-    throw new UnauthorizedException('Your account is not approved yet');
-  }
+    if (user.status !== 'APPROVED') {
+      throw new UnauthorizedException('Your account is not approved yet');
+    }
 
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET is not defined in environment variables');
@@ -119,22 +120,20 @@ export class AuthService {
       throw new UnauthorizedException('Access denied');
     }
 
-      // get user 
-  const user = await this.prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user) {
-    throw new BadRequestException('User not found');
-  }
-
-  // ⭐ FIX: also update organization status
-  if (user.orgId) {
-    await this.prisma.organization.update({
-      where: { id: user.orgId },
-      data: { status },
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
-  }
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.orgId) {
+      await this.prisma.organization.update({
+        where: { id: user.orgId },
+        data: { status },
+      });
+    }
 
     return this.prisma.user.update({
       where: { id: userId },
@@ -142,30 +141,27 @@ export class AuthService {
     });
   }
 
-  // ⭐ FIXED registerOrg() — Now accepts dto + files
-  // ----------------------------------------------------
+  // -----------------------------
+  // REGISTER ORGANIZATION + SYNC SUPABASE
+  // -----------------------------
   async registerOrg(dto: RegisterOrgDto, files: Array<Express.Multer.File>) {
-
-    console.log("DTO RECEIVED:", dto);
-    console.log("FILES RECEIVED:", files);
+    console.log('DTO RECEIVED:', dto);
+    console.log('FILES RECEIVED:', files);
 
     // GSTIN duplicate check
     if (dto.gstin) {
       const gstExist = await this.prisma.organization.findUnique({
         where: { gstin: dto.gstin },
       });
-
       if (gstExist) {
         throw new BadRequestException('Organization with this GSTIN already exists');
       }
     }
 
-    // ----------------------------------------------------
-    // STEP 1: Create Organization
-    // ----------------------------------------------------
+    // STEP 1: Create Organization in Prisma
     const org = await this.prisma.organization.create({
       data: {
-        name: dto.orgName ?? dto.contactName ?? "NoName",
+        name: dto.orgName ?? dto.contactName ?? 'NoName',
         gstin: dto.gstin || null,
         address: dto.address,
         status: 'PENDING',
@@ -175,12 +171,8 @@ export class AuthService {
       },
     });
 
-    // ----------------------------------------------------
-    // STEP 2: Create Admin User for this Organization
-    // ----------------------------------------------------
-
+    // STEP 2: Create Admin User in Prisma
     const hashed = await bcrypt.hash(dto.password, 10);
-
     const user = await this.prisma.user.create({
       data: {
         username: dto.username,
@@ -193,10 +185,39 @@ export class AuthService {
       },
     });
 
+    // STEP 3: Insert into Supabase for Realtime or External DB
+    const { data: supaOrg, error: supaError } = await supabase
+      .from('organizations')
+      .insert([
+        {
+          org_name: dto.orgName,
+          address: dto.address,
+          contact_name: dto.contactName,
+          email: dto.email,
+          phone: dto.phone,
+          business_type: dto.businessType,
+          experience: dto.experience,
+          username: dto.username,
+          password: hashed,
+          gstin: dto.gstin || null,
+          kyc_document_url: dto.kycDocumentUrl || null,
+          designation: dto.designation || null,
+          website: dto.website || null,
+          description: dto.description || null,
+        },
+      ])
+      .select()
+      .single();
+
+    if (supaError) {
+      throw new BadRequestException(`Supabase insert failed: ${supaError.message}`);
+    }
+
     return {
       message: 'Organization registered successfully. Wait for approval.',
       org,
       user,
+      supabaseOrg: supaOrg,
       uploadedFiles: files ?? [],
     };
   }

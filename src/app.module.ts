@@ -6,6 +6,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module'; 
 import { AdminModule } from './admin/admin.module';
+import { TodosController } from './todos/todos.controller';
+import { TodosService } from './todos/todos.service';
 
 
 @Module({
@@ -27,7 +29,7 @@ import { AdminModule } from './admin/admin.module';
     AuthModule, 
     AdminModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController,TodosController],
+  providers: [AppService,TodosService],
 })
 export class AppModule {}

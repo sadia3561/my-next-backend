@@ -17,6 +17,7 @@ export class AdminController {
     return this.adminService.getPendingOrgs();
   }
 
+  
   @Patch('approve/:orgId')
   @Roles(UserRoleEnum.ADMIN)
   approveOrg(@Param('orgId') orgId: string) {

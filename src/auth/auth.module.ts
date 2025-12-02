@@ -6,6 +6,8 @@ import { MailModule } from 'src/mail/mail.module';
 import { MailService } from 'src/mail/mail.service';
 import { JwtStrategy } from './jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
+import supabase from '../supabase/supabase.client';
+
 
 
 @Module({
