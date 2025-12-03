@@ -12,7 +12,12 @@ async function bootstrap() {
 
   // ⚡ Proper CORS settings
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: [
+    'http://localhost:3000',
+    'https://my-next-frontend-seven.vercel.app',
+    'https://my-next-frontend-sadiyas-projects-67d7bf27.vercel.app'
+  ],
+    
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -24,6 +29,6 @@ async function bootstrap() {
   const port = process.env.PORT ? Number(process.env.PORT) : 4000;
   await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 Backend is running on port ${port} with /api prefix`);
+  console.log(`🚀 Backend is running on port ${port} `);
 }
 bootstrap();
