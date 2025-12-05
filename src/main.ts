@@ -12,13 +12,10 @@ async function bootstrap() {
 
   // ⚡ Proper CORS settings
   app.enableCors({
-  origin: (origin, callback) => {
-    callback(null, true); // allow all for now (safe)
-  },
+  origin: true,          // allow all origins
   credentials: true,
-  methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-  allowedHeaders: "Content-Type, Authorization",
 });
+
 
 
   // ⚡ Increase JSON size limit
