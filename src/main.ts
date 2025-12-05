@@ -17,6 +17,7 @@ async function bootstrap() {
     'https://my-next-frontend-seven.vercel.app',
     'https://my-next-frontend-sadiyas-projects-67d7bf27.vercel.app'
   ],
+  
     
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

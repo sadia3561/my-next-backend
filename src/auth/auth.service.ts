@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { RegisterOrgDto } from './dto/register-org.dto';
-import supabase from '../supabase/supabase.client'; // ✅ Added Supabase import
+
 
 @Injectable()
 export class AuthService {
@@ -185,39 +185,13 @@ export class AuthService {
       },
     });
 
-    // STEP 3: Insert into Supabase for Realtime or External DB
-    const { data: supaOrg, error: supaError } = await supabase
-      .from('organizations')
-      .insert([
-        {
-          org_name: dto.orgName,
-          address: dto.address,
-          contact_name: dto.contactName,
-          email: dto.email,
-          phone: dto.phone,
-          business_type: dto.businessType,
-          experience: dto.experience,
-          username: dto.username,
-          password: hashed,
-          gstin: dto.gstin || null,
-          kyc_document_url: dto.kycDocumentUrl || null,
-          designation: dto.designation || null,
-          website: dto.website || null,
-          description: dto.description || null,
-        },
-      ])
-      .select()
-      .single();
-
-    if (supaError) {
-      throw new BadRequestException(`Supabase insert failed: ${supaError.message}`);
-    }
+  
+    
 
     return {
       message: 'Organization registered successfully. Wait for approval.',
       org,
       user,
-      supabaseOrg: supaOrg,
       uploadedFiles: files ?? [],
     };
   }
