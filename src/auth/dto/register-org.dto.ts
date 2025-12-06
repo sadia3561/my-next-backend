@@ -26,7 +26,7 @@ export class RegisterOrgDto {
 
   // Single file upload (multer handles File type)
   @IsOptional()
-  kycDoc?: Express.Multer.File;
+  kycDoc?: any;
 
   // ✅ Add this for the saved URL of KYC document
   @IsOptional()
@@ -70,7 +70,7 @@ export class RegisterOrgDto {
   experience: string;
 
   @IsOptional()
-  licenseDoc?: Express.Multer.File;
+  licenseDoc?: any;
 
   @IsOptional()
   @IsString()

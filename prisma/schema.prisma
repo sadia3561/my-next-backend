@@ -121,7 +121,6 @@ model KYC {
   uploadedAt   DateTime  @default(now())
   reviewedAt   DateTime?
   reviewerId   String?
-
   user         User      @relation("UserKycDocs", fields: [userId], references: [id])
 }
 
@@ -163,7 +162,6 @@ model AuditLog {
   action    String
   metadata  Json?
   timestamp DateTime @default(now())
-
   user User? @relation(fields: [userId], references: [id])
 }
 
@@ -172,6 +170,5 @@ model Session {
   userId    String
   token     String   @unique
   expiresAt DateTime
-
   user      User     @relation(fields: [userId], references: [id])
 }

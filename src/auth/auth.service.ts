@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { RegisterOrgDto } from './dto/register-org.dto';
+import { Express } from 'express';
 
 
 @Injectable()
@@ -171,12 +172,48 @@ export class AuthService {
       },
     });
 
+
+      // STEP 2: Handle uploaded files (KYC & License) ✅ ADDED
+    let kycFileUrl: string | null = null;
+    let licenseFileUrl: string | null = null;
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        if (file.fieldname === 'kycDoc') kycFileUrl = `/uploads/${file.filename}`; // ✅ save KYC URL
+        if (file.fieldname === 'licenseDoc') licenseFileUrl = `/uploads/${file.filename}`; // ✅ save License URL
+      }
+    }
+
+    // STEP 3: Create PartnerRegistration in Prisma ✅ ADDED
+    const hashedPassword = await bcrypt.hash(dto.password, 10); // ✅ hash password
+
+    const partnerReg = await this.prisma.partnerRegistration.create({
+      data: {
+        orgName: dto.orgName,
+        gstin: dto.gstin || null,
+        address: dto.address,
+        contactName: dto.contactName,
+        designation: dto.designation || null,
+        email: dto.email,
+        phone: dto.phone,
+        website: dto.website || null,
+        businessType: dto.businessType,
+        experience: dto.experience,
+        kycDocUrl: kycFileUrl, // ✅ saved KYC file URL
+        licenseDocUrl: licenseFileUrl, // ✅ saved License file URL
+        description: dto.description || null,
+        username: dto.username,
+        passwordHash: hashedPassword, // ✅ hashed password
+        status: 'PENDING',
+      },
+    });
+
     // STEP 2: Create Admin User in Prisma
     const hashed = await bcrypt.hash(dto.password, 10);
     const user = await this.prisma.user.create({
       data: {
         username: dto.username,
-        password: hashed,
+        password: hashedPassword,
         email: dto.email,
         name: dto.contactName,
         role: 'USER',
@@ -192,6 +229,7 @@ export class AuthService {
       message: 'Organization registered successfully. Wait for approval.',
       org,
       user,
+      partnerReg,
       uploadedFiles: files ?? [],
     };
   }
