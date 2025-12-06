@@ -8,14 +8,14 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
- 
+  app.setGlobalPrefix('api');
 
   app.enableCors({
     origin: [
-      'https://my-next-frontend-seven.vercel.app',
+      //'https://my-next-frontend-seven.vercel.app',
       'https://my-next-frontend-sadiyas-projects-67d7bf27.vercel.app',
-      'https://my-next-frontend-git-main-sadiyas-projects-67d7bf27.vercel.app',
-      'https://my-next-frontend-8644rh4ws-sadiyas-projects-67d7bf27.vercel.app'
+      //'https://my-next-frontend-git-main-sadiyas-projects-67d7bf27.vercel.app',
+      //'https://my-next-frontend-8644rh4ws-sadiyas-projects-67d7bf27.vercel.app'
     ],
     methods: ['GET','POST','PATCH','PUT','DELETE','OPTIONS'],
     allowedHeaders: ['Content-Type','Authorization'],
