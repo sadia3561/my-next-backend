@@ -9,6 +9,7 @@ import { AdminModule } from './admin/admin.module';
 
 
 
+
 @Module({
   imports: [
     RabbitModule,
@@ -28,7 +29,7 @@ import { AdminModule } from './admin/admin.module';
     AuthModule, 
     AdminModule,
   ],
-  
+
   controllers: [AppController],
   providers: [AppService],
 })
