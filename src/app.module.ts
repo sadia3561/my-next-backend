@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module'; 
 import { AdminModule } from './admin/admin.module';
+import { RootController } from './controllers/root.controller'; 
 
 
 
@@ -30,7 +31,7 @@ import { AdminModule } from './admin/admin.module';
     AdminModule,
   ],
 
-  controllers: [AppController],
+  controllers: [AppController,RootController],
   providers: [AppService],
 })
 export class AppModule {}
