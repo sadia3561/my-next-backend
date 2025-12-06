@@ -6,6 +6,7 @@ dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const expressApp = app.getHttpAdapter().getInstance(); // get Express instance
 
   // ⚡ GLOBAL PREFIX: All APIs will start with /api
   app.setGlobalPrefix('api');
@@ -28,6 +29,10 @@ async function bootstrap() {
 
   // ⚡ Increase JSON size limit
   app.use(json({ limit: '5mb' }));
+
+   
+  // ✅ Root route for Railway
+  expressApp.get('/', (req, res) => res.send('Backend is running'));
 
   const port = process.env.PORT ? Number(process.env.PORT) : 4000;
   await app.listen(port, '0.0.0.0');
