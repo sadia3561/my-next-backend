@@ -12,11 +12,17 @@ async function bootstrap() {
 
   // ⚡ Proper CORS settings
   app.enableCors({
-  origin: true,          // allow all origins
-  credentials: true,
-});
-
-
+    origin: [
+    //'http://localhost:3000',
+    'https://my-next-frontend-seven.vercel.app',
+    'https://my-next-frontend-sadiyas-projects-67d7bf27.vercel.app'
+  ],
+  
+    
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
 
   // ⚡ Increase JSON size limit
   app.use(json({ limit: '5mb' }));

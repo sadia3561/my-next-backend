@@ -28,6 +28,7 @@ import { AdminModule } from './admin/admin.module';
     AuthModule, 
     AdminModule,
   ],
+  
   controllers: [AppController],
   providers: [AppService],
 })
