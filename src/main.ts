@@ -15,7 +15,9 @@ async function bootstrap() {
     origin: [
     //'http://localhost:3000',
     'https://my-next-frontend-seven.vercel.app',
-    'https://my-next-frontend-sadiyas-projects-67d7bf27.vercel.app'
+    'https://my-next-frontend-sadiyas-projects-67d7bf27.vercel.app',
+    'https://my-next-frontend-git-main-sadiyas-projects-67d7bf27.vercel.app',
+    'https://my-next-frontend-8644rh4ws-sadiyas-projects-67d7bf27.vercel.app'
   ],
   
     
