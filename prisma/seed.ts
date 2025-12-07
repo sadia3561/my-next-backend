@@ -1,34 +1,47 @@
-
-
-
-
-
-
-        import { PrismaClient, UserRoleEnum, RegistrationStatus } from '@prisma/client';
+import { PrismaClient, UserRoleEnum, RegistrationStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const existingAdmin = await prisma.user.findFirst({ where: { role: UserRoleEnum.ADMIN } });
+  console.log("🌱 Seeding started...");
 
-  if (!existingAdmin) {
-    const admin = await prisma.user.create({
-      data: {
-        email: "sadiyabepari8@gmail.com",
-        username: "admin123",
-       password: "$2b$10$g6yqj3wVvb5Uv4H/4fV3Neq/0QDUryLBuZn47CTh/HsfI7bIbtmCO", // hashed
-        role: UserRoleEnum.ADMIN,
-        name: "Admin User",
-        status: RegistrationStatus.APPROVED,
-      },
-    });
+  // NEW ADMIN DETAILS
+  const adminEmail = "sadiyabepari8@gmail.com";
 
-    console.log("Admin created:", { email: admin.email, username: admin.username });
-  } else {
-    console.log("Admin already exists:", { email: existingAdmin.email, username: existingAdmin.username });
+  // Check if admin already exists (safety check)
+  const existing = await prisma.user.findFirst({
+    where: { email: adminEmail },
+  });
+
+  if (existing) {
+    console.log("Admin already exists. Skipping create.");
+    return;
   }
+
+  // Create NEW admin
+  const admin = await prisma.user.create({
+    data: {
+      email: adminEmail,
+      username: "admin123",
+      password:
+        "$2b$10$uCdfnoMYnH6yROKUbi3cqeOYOZ3RtZ78GdU21w5v.h6F7pGFnjEFi", // password = admin123
+      role: UserRoleEnum.ADMIN,
+      name: "Admin User",
+      status: RegistrationStatus.APPROVED,
+    },
+  });
+
+  console.log("✅ New admin created:", {
+    email: admin.email,
+    username: admin.username,
+  });
 }
 
 main()
-  .catch(console.error)
-  .finally(async () => await prisma.$disconnect());
+  .catch((e) => {
+    console.error("❌ Seed error:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
