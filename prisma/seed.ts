@@ -10,7 +10,7 @@ async function main() {
       data: {
         email: "sadiyabepari8@gmail.com",
         username: "admin123",
-        password: "$2b$10$3IO.GNxiod0fcW1oYQ6AxeLP0dyIU7mli7yxUsG2qpnrB6xYYTd6S", // hashed
+        password: "$2b$10$uCdfnoMYnH6yROKUbi3cqeOYOZ3RtZ78GdU21w5v.h6F7pGFnjEFi", // hashed
         role: UserRoleEnum.ADMIN,
         name: "Admin User",
         status: RegistrationStatus.APPROVED,
