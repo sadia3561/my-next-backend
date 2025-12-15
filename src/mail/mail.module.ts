@@ -9,14 +9,26 @@ import { MailService } from './mail.service';
       transport: {
         host: process.env.SMTP_HOST,
         port: Number(process.env.SMTP_PORT),
-        secure: Number(process.env.SMTP_PORT) === 465, // true for gmail
+
+        // 🔧 FIX 1: Brevo uses STARTTLS (587), not secure=true
+        secure: Number(process.env.SMTP_PORT) === 465,
+
         auth: {
-          user: process.env.SMTP_EMAIL,
-          pass: process.env.SMTP_PASSWORD,
+          // 🔧 FIX 2: Brevo SMTP USER must be 'apikey'
+          // (old SMTP_EMAIL is NOT removed, just not used)
+          user: process.env.SMTP_USER || 'apikey',
+
+          // 🔧 FIX 3: Brevo API Key should be used as password
+          pass: process.env.SMTP_PASS || process.env.SMTP_PASSWORD,
         },
       },
+
       defaults: {
-        from: `"No Reply" <${process.env.SMTP_EMAIL}>`,
+        // 🔧 FIX 4: Use verified sender email explicitly
+        // (fallback keeps backward compatibility)
+        from: `"AGNI" <${
+          process.env.MAIL_FROM || process.env.SMTP_EMAIL
+        }>`,
       },
     }),
   ],
