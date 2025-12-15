@@ -25,7 +25,9 @@ import { RootController } from './controllers/root.controller';
           pass: process.env.SMTP_PASSWORD,
         },
       },
-      defaults: { from: '"No Reply" <your-email@gmail.com>' },
+      defaults: {
+    from: `"No Reply" <${process.env.SMTP_EMAIL}>`,
+  },
     }),
     AuthModule, 
     AdminModule,

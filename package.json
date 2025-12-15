@@ -34,7 +34,7 @@
     "@nestjs/platform-socket.io": "^11.1.6",
     "@nestjs/websockets": "^11.1.6",
     "@prisma/client": "^6.19.0",
-    "@supabase/supabase-js": "^2.86.0",
+    "@supabase/supabase-js": "^2.87.1",
     "amqplib": "^0.10.9",
     "aws-sdk": "^2.1692.0",
     "bcrypt": "^6.0.0",

@@ -1,3 +1,4 @@
+//src/admin/admin.module.ts
 import { Module } from '@nestjs/common';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
@@ -11,3 +12,6 @@ import { MailService } from 'src/mail/mail.service';
   providers: [AdminService, PrismaService, MailService],
 })
 export class AdminModule {}
+
+
+
