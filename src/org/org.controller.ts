@@ -22,7 +22,7 @@ export class OrgController {
       }
     });
 
-    await this.mailService.sendApprovalPendingEmail(body.email, org.name);
+    
 
     return {
       message: 'Registration submitted, check email.',
