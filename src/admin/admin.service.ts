@@ -51,7 +51,7 @@ export class AdminService {
       });
 
       // send approved email
-      
+      await this.mail.sendApprovedEmail(u.email, updatedOrg.name);
     }
 
     // Audit log
