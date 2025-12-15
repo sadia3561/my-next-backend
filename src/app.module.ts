@@ -16,19 +16,18 @@ import { RootController } from './controllers/root.controller';
     RabbitModule,
     MailerModule.forRoot({
       transport: {
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-          
-          user: process.env.SMTP_EMAIL,
-          pass: process.env.SMTP_PASSWORD,
-        },
-      },
-      defaults: {
-    from: `"No Reply" <${process.env.SMTP_EMAIL}>`,
+         host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: false, // IMPORTANT for Brevo
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
   },
-    }),
+  defaults: {
+    from: '"No Reply" <no-reply@yourdomain.com>',
+  },
+}),
     AuthModule, 
     AdminModule,
   ],

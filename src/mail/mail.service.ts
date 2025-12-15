@@ -19,6 +19,7 @@ export class MailService {
 
   async sendApprovedEmail(to: string, orgName: string) {
     await this.mailerService.sendMail({
+      from: process.env.SMTP_FROM,
       to,
       subject: 'Organization Approved - You Can Login Now',
       text: `Congratulations! Your organization "${orgName}" has been approved. You can now log in.`,
